@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socket.io Example</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <style>
+        html, body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100%;
+            width: 100%;
+        }
+
+        .settings {
+            width: 20%;
+            padding: 20px;
+            box-sizing: border-box;
+            background-color: #f0f0f0;
+        }
+
+        .models-container {
+            flex: 1;
+            width: 80%;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow: auto;
+            background-color: #e5e5e5;
+        }
+        #connection-status {
+            width: 20px;
+            height: 20px;
+            background-color: red;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        #models {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .model {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 12px;
+            margin: 8px;
+            width: 220px;
+        }
+        .model-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+        .layer {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 6px;
+            margin-bottom: 6px;
+        }
+        .layer-type {
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        .layer-params {
+            font-size: 0.8em;
+        }
+        .modelLogs {
+            font-size: 0.8em;
+            display: flex;
+            flex-direction: column;
+        }
+        .metric {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+        progress {
+            width: 60%;
+        }
+        table {
+            margin-bottom: 16px;
+        }
+        input[type="number"] {
+            width: 80px;
+            margin-right: 8px;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .perfomance span{
+
+            padding: 2px;
+            border: 1px solid black;
+            font-size: 0.7em;
+            margin: 1px;
+            border-radius: 3px;
+
+
+        }
+
+    </style>
+
+</head>
+<body>
+
+<div id="connection-status"></div>
+<div class="container">
+    <div class="settings">
+        <!-- убрано table -->
+        <div>
+            <label for="populationSize">Популяция:</label>
+            <input type="number" placeholder="pop" id="populationSize">
+        </div>
+        <div>
+            <label for="numGenerations">Поколения:</label>
+            <input type="number" placeholder="gen" id="numGenerations">
+        </div>
+        <div>
+            <label for="numParents">Родители:</label>
+            <input type="number" placeholder="par" id="numParents">
+        </div>
+        <button onclick="initNetwork()">НАЧАТЬ</button>
+        <div>
+            <label for="currentGeneration">текущая популяция :</label>
+            <div  placeholder="par" id="currentGeneration"></div>
+        </div>
+        <div>
+            <label for="bestModelInfo">bestModelInfo :</label>
+            <div  placeholder="par" id="bestModelInfo"></div>
+        </div>
+    </div>
+    <div class="models-container" id="models"></div>
+</div>
+
+</body>
+</html>
+<script>
+    const configNetwork = {
+        populationSize:2,
+        numGenerations:4,
+        numParents:2,
+    }
+
+    function initNetwork(){
+        configNetwork.populationSize = $('#populationSize').val()
+        configNetwork.numGenerations = $('#numGenerations').val()
+        configNetwork.numParents = $('#numParents').val()
+
+        sendMessage('initNetwork',configNetwork)
+    }
+    function sendMessage(method,data){
+        socket.emit('message', JSON.stringify({method,data}));
+    }
+    const socket = io();
+    let models = []
+    $(document).ready(function () {
+        const connectionStatus = $('#connection-status');
+        $('#populationSize').val(configNetwork.populationSize)
+        $('#numGenerations').val(configNetwork.numGenerations)
+        $('#numParents').val(configNetwork.numParents)
+
+        socket.on('connect', () => {
+            connectionStatus.css('background-color', 'green');
+        });
+
+        socket.on('disconnect', () => {
+            connectionStatus.css('background-color', 'red');
+
+        });
+
+
+        socket.on('message', function (message) {
+
+            switch (message.method) {
+                case 'models':
+                    models = message.data
+                    console.log(models)
+                    visualizeModels()
+                    break;
+                case 'logs':
+                    let m = models.find(m=>m.uid===message.data.uid)
+                    addLogsToModels(m,message.data)
+                    break;
+                case 'generation':
+                    $('#currentGeneration').text(message.data.generation)
+                    break;
+                case 'updateModel':
+                    for (let i = 0; i < models.length; i++) {
+                        if (models[i].uid==message.data.uid){
+                            models[i] = message.data
+                            console.log(models[i].layers)
+                            visualizeModels()
+                            break;
+                        }
+                    }
+                    break;
+                case 'bestModelInfo':
+
+                    console.log(message.data)
+                    for (let i = 0; i < message.data.length; i++) {
+                        // $(`#perfomanceId_${message.data[i].params.uid}`).append(getHtmlColor(message.data[i].performance))
+                    }
+                    // $('#modelId_').text(message.data)
+                    break;
+
+            }
+
+        });
+    });
+
+    function visualizeModels() {
+        const modelsContainer = $('#models');
+        modelsContainer.empty();
+
+        models.forEach((model, index) => {
+            let performanceHtml = '';
+
+            for (let i = 0; i < model.performance.length; i++) {
+                performanceHtml += getHtmlColor(model.performance[i]);
+            }
+
+            const modelTemplate = `
+            <div class="model" id="modelId_${model.uid}">
+                <div class="model-title">Model ${model.uid}</div>
+                <div class="perfomance" id="perfomanceId_${model.uid}">${performanceHtml}</div>
+                <div class="modelLogs">
+                    <div class="metric">
+                        <span>Epoch:</span>
+                        <progress id="epoch_${model.uid}" max="100"></progress>
+                        <span id="epoch_value_${model.uid}"></span>
+                    </div>
+                    <div class="metric">
+                        <span>Acc:</span>
+                        <progress id="acc_${model.uid}" max="100"></progress>
+                        <span id="acc_value_${model.uid}"></span>
+                    </div>
+                    <div class="metric">
+                        <span>Loss:</span>
+                        <progress id="loss_${model.uid}" max="100"></progress>
+                        <span id="loss_value_${model.uid}"></span>
+                    </div>
+                </div>
+                ${model.layers.map(layer => `
+                    <div class="layer">
+                        <div class="layer-type">Type: ${layer.type}</div>
+                        <div class="layer-params">
+                            ${Object.entries(layer.params)
+                .filter(([param]) => ['inputShape', 'units'].includes(param))
+                .map(([param, value]) => `<div>${param}: ${JSON.stringify(value)}</div>`)
+                .join('')}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+            modelsContainer.append(modelTemplate);
+        });
+    }
+
+
+    function addLogsToModels(model, data) {
+
+        switch (data.type) {
+            case "onEpochEnd":
+                const accProgress = Math.round(data.msg.logs.acc * 100);
+                const lossProgress = Math.round((1 - data.msg.logs.loss) * 100);
+                const epochProgress = Math.round((data.msg.epoch / model.epochs) * 100);
+
+                $(`#acc_${model.uid}`).val(accProgress);
+                $(`#acc_value_${model.uid}`).text(`(${(data.msg.logs.acc).toFixed(3)})`);
+
+                $(`#loss_${model.uid}`).val(lossProgress);
+                $(`#loss_value_${model.uid}`).text(`(${(data.msg.logs.loss).toFixed(3)})`);
+
+                $(`#epoch_${model.uid}`).val(epochProgress);
+                $(`#epoch_value_${model.uid}`).text(`(${data.msg.epoch+1}/${model.epochs})`);
+                break;
+        }
+    }
+
+
+
+    function getHtmlColor(score) {
+        const hue = Math.floor((1 - score) * 120); // вычисляем оттенок HSL
+        const color = hslToHex(hue, 100, 50); // преобразуем в шестнадцатеричный формат
+        return `<span style="background-color: ${color}">${score.toFixed(2)}</span>`; // возвращаем html-строку
+    }
+
+    // функция для преобразования HSL в шестнадцатеричный формат
+    function hslToHex(h, s, l) {
+        h /= 360;
+        s /= 100;
+        l /= 100;
+        let r, g, b;
+        if (s === 0) {
+            r = g = b = l; // achromatic
+        } else {
+            const hue2rgb = (p, q, t) => {
+                if (t < 0) t += 1;
+                if (t > 1) t -= 1;
+                if (t < 1 / 6) return p + (q - p) * 6 * t;
+                if (t < 1 / 2) return q;
+                if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+                return p;
+            };
+            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            const p = 2 * l - q;
+            r = hue2rgb(p, q, h + 1 / 3);
+            g = hue2rgb(p, q, h);
+            b = hue2rgb(p, q, h - 1 / 3);
+        }
+        const toHex = (x) => {
+            const hex = Math.round(x * 255).toString(16);
+            return hex.length === 1 ? '0' + hex : hex;
+        };
+        return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+    }
+
+
+
+</script>

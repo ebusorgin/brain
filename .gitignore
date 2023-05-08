@@ -1,0 +1,11 @@
+./node_modules
+./2d/logs
+./2d/best_model1
+./2d/best_model
+./1d/best_model
+./1d/best_model1
+node_modules
+2d/logs
+.idea
+best_model1
+best_model
