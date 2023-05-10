@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <title>Canvas Drawing</title>
+  <style>
+    canvas {
+      border: 1px solid black;
+    }
+    table tr td{
+      border: 1px solid black;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<table>
+  <tr>
+    <td>
+      Получить предсказания
+    </td>
+    <td>
+      Тренировочные данные
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2">
+      <input id="canvasSize" type="number" placeholder="размер канваса" style="width: 80px" value="128">
+      <input type="color" id="colorPicker" value="#000000">
+      <input type="range" id="penSize" min="1" max="50" value="20">
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <canvas id="predictionsCanvas"></canvas>
+    </td>
+    <td>
+      <canvas id="traningCanvas"></canvas>
+    </td>
+  </tr>
+  <tr>
+    <td  style="text-align: center">
+      <button id="saveButton" >Сохранить</button>
+    </td>
+    <td style="text-align: center">
+      <button id="saveButton2" onclick="saveImage()">Сохранить</button>
+    </td>
+  </tr>
+</table>
+
+
+
+
+
+
+<script src="client.js"></script>
+
+</body>
+</html>
