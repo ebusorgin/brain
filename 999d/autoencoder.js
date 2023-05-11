@@ -6,26 +6,13 @@ const IMAGE_PATH = 'image1.png';
 const IMAGE_SIZE = 32; // Ваш размер изображения
 let outImage_name = 'restored_image.png'
 async function loadAndProcessImage(path) {
-    // const image = await Jimp.read(path);
-    // image.resize(IMAGE_SIZE, IMAGE_SIZE); // Добавьте эту строку
-    // console.log(image.bitmap.width)
-    // console.log(image.bitmap.height)
-    // const data = tf.browser.fromPixels({ data: image.bitmap.data, width: image.bitmap.width, height: image.bitmap.height }, 1);
-    // return data.toFloat().div(255).reshape([1, IMAGE_SIZE, IMAGE_SIZE, 1]);
     const image = await Jimp.read(path);
-    image.resize(IMAGE_SIZE, IMAGE_SIZE);
+    image.resize(IMAGE_SIZE, IMAGE_SIZE); // Добавьте эту строку
+    console.log(image.bitmap.width)
+    console.log(image.bitmap.height)
+    const data = tf.browser.fromPixels({ data: image.bitmap.data, width: image.bitmap.width, height: image.bitmap.height }, 1);
+    return data.toFloat().div(255).reshape([1, IMAGE_SIZE, IMAGE_SIZE, 1]);
 
-    const x = 0; // Starting x-coordinate of the region to crop
-    const y = 0; // Starting y-coordinate of the region to crop
-    const width = IMAGE_SIZE; // Width of the region to crop (same as IMAGE_SIZE)
-    const height = IMAGE_SIZE; // Height of the region to crop (same as IMAGE_SIZE)
-
-    // Crop the desired region from the image
-    const croppedImage = image.crop(x, y, width, height);
-
-    // Convert the cropped image to a tensor and normalize it
-    const data = tf.browser.fromPixels({ data: croppedImage.bitmap.data, width: croppedImage.bitmap.width, height: croppedImage.bitmap.height }, 1);
-    return data.toFloat().div(255).reshape([1, croppedImage.bitmap.width, croppedImage.bitmap.height, 1]);
 }
 
 
@@ -124,6 +111,18 @@ async function main() {
 
     const output = autoencoder.predict(input);
     await saveImage(output.reshape([IMAGE_SIZE, IMAGE_SIZE]), outImage_name);
+
+    // Удаление найденных признаков
+    const decodedOutput = decoder.predict(output);
+    const encodedOutput = encoder.predict(decodedOutput);
+
+
+
+    // await saveImage(modifiedOutput.reshape([IMAGE_SIZE, IMAGE_SIZE]), `DEL_${outImage_name}`);
+    await saveImage(modifiedInput.reshape([IMAGE_SIZE, IMAGE_SIZE]), `DEL_${outImage_name}`);
+
+
+
 }
 
 main();
