@@ -34,6 +34,16 @@ export  function tensorToImages(tensor) {
     // Возвращаем массив изображений
     return images;
 }
+export function mergeNestedArrays(arr1, arr2) {
+    if (Array.isArray(arr1) && Array.isArray(arr2)) {
+        return arr1.map((item, i) => {
+            return mergeNestedArrays(item, arr2[i]);
+        });
+    } else {
+        return [arr1, arr2];
+    }
+}
+
 export function arrayToMatrix(arr) {
     const length = arr.length;
     const sqrt = Math.sqrt(length);

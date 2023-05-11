@@ -1,5 +1,5 @@
 let penSize = ''
-let canvasSize = 512
+let canvasSize = 256
 const socket = io();
 
 

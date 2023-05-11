@@ -1,0 +1,4 @@
+class BRAIN {
+    constructor() {
+    }
+}
